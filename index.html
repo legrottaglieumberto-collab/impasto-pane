@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#ff9500" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Impasto" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icon.svg" />
+<link rel="icon" href="./icon.svg" />
+<title>Impasto Pane</title>
+<style>
+  :root{
+    --accent:#ff9500; --accent-2:#ffb340;
+    --blue:#0a84ff; --green:#34c759; --red:#ff3b30;
+    --bg:#f2f2f7; --bg-elev:#fff; --card:#fff; --card-2:#f1f1f5;
+    --text:#1c1c1e; --text-2:#8e8e93; --sep:rgba(60,60,67,.13);
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+    --radius:22px;
+    --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#000;--bg-elev:#1c1c1e;--card:#1c1c1e;--card-2:#2c2c2e;--text:#fff;--text-2:#98989f;--sep:rgba(120,120,128,.3);--shadow:0 1px 3px rgba(0,0,0,.5);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;font-size:17px;line-height:1.35;overscroll-behavior-y:none;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+  input,select{font-family:inherit;}
+  input[type=number]{-moz-appearance:textfield;}
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .app{max-width:540px;margin:0 auto;min-height:100%;}
+
+  .view{display:none;animation:fade .26s ease;padding:0 18px calc(40px + var(--safe-bottom));}
+  .view.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:calc(var(--safe-top) + 14px) 18px 12px;
+    background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);}
+  .topbar h1{font-size:30px;font-weight:800;margin:0;letter-spacing:-.6px;}
+  .topbar .lead{display:flex;align-items:center;gap:10px;}
+  .topbar .back{font-size:17px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:3px;}
+  .icon-btn{width:42px;height:42px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:20px;}
+
+  .sub{font-size:14px;color:var(--text-2);font-weight:500;margin:-4px 4px 16px;}
+
+  /* Card produzione / farina */
+  .bigcard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 18px;margin-bottom:16px;}
+  .bigcard .head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .bigcard .head .ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;background:var(--card-2);}
+  .bigcard .head .t{font-size:18px;font-weight:800;letter-spacing:-.2px;}
+
+  .seg{display:flex;background:var(--card-2);border-radius:13px;padding:4px;margin-bottom:16px;}
+  .seg button{flex:1;padding:11px;font-size:15px;font-weight:700;border-radius:9px;color:var(--text-2);transition:.18s;}
+  .seg button.on{background:var(--bg-elev);color:var(--text);box-shadow:var(--shadow);}
+
+  .bigfield{position:relative;}
+  .bigfield input{width:100%;padding:18px 70px 18px 20px;font-size:42px;font-weight:800;letter-spacing:-1px;
+    border-radius:18px;border:2px solid transparent;background:var(--card-2);color:var(--text);}
+  .bigfield input:focus{outline:none;border-color:var(--accent);background:var(--bg-elev);}
+  .bigfield .unit{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:22px;font-weight:700;color:var(--text-2);pointer-events:none;}
+
+  .hint{margin:12px 4px 0;font-size:15px;font-weight:600;color:var(--text-2);display:flex;align-items:center;gap:6px;min-height:20px;}
+  .hint b{color:var(--accent);font-weight:800;}
+
+  .farinaval{font-size:54px;font-weight:800;letter-spacing:-1.5px;line-height:1;margin:2px 2px 0;}
+  .farinaval small{font-size:24px;font-weight:700;color:var(--text-2);}
+  .farinaedit{position:relative;margin-top:4px;}
+  .farinaedit input{width:100%;padding:16px 70px 16px 20px;font-size:40px;font-weight:800;letter-spacing:-1px;border-radius:18px;border:2px solid transparent;background:var(--card-2);color:var(--text);}
+  .farinaedit input:focus{outline:none;border-color:var(--accent);background:var(--bg-elev);}
+  .farinaedit .unit{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:22px;font-weight:700;color:var(--text-2);pointer-events:none;}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:19px;border-radius:18px;
+    font-size:20px;font-weight:800;background:var(--accent);color:#fff;box-shadow:0 8px 22px rgba(255,149,0,.32);transition:transform .08s,opacity .15s;}
+  .btn:active{transform:scale(.97);}
+  .btn:disabled{opacity:.4;box-shadow:none;}
+  .btn.secondary{background:var(--card);color:var(--text);box-shadow:var(--shadow);}
+  .btn.ghost{background:var(--card-2);color:var(--text);box-shadow:none;}
+
+  /* Ricetta */
+  .summary{display:flex;gap:10px;margin-bottom:8px;}
+  .sumcard{flex:1;background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px 12px;text-align:center;}
+  .sumcard .l{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-2);}
+  .sumcard .v{font-size:24px;font-weight:800;letter-spacing:-.5px;margin-top:3px;}
+  .sumcard .v small{font-size:14px;color:var(--text-2);font-weight:700;}
+  .sumcard.accent{background:linear-gradient(135deg,var(--accent-2),var(--accent));color:#fff;}
+  .sumcard.accent .l{color:rgba(255,255,255,.85);} .sumcard.accent .v small{color:rgba(255,255,255,.8);}
+
+  .lievito-pill{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px 16px;margin:14px 0;}
+  .lievito-pill .lab{display:flex;align-items:center;gap:9px;font-weight:700;}
+  .lievito-pill .lab .e{font-size:22px;}
+  .stepper{display:flex;align-items:center;gap:10px;}
+  .stepper button{width:34px;height:34px;border-radius:50%;background:var(--card-2);font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;}
+  .stepper input{width:62px;text-align:center;font-size:19px;font-weight:800;padding:7px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg-elev);color:var(--text);}
+  .stepper .u{font-size:14px;font-weight:700;color:var(--text-2);}
+
+  .batch-title{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-2);margin:22px 6px 12px;display:flex;align-items:center;gap:8px;}
+  .batch-title .badge{background:var(--accent);color:#fff;font-size:13px;padding:3px 10px;border-radius:20px;letter-spacing:0;}
+
+  .ing-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .ing{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:18px 14px;text-align:center;}
+  .ing .circle{width:64px;height:64px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:34px;}
+  .ing .nome{font-size:14px;font-weight:600;color:var(--text-2);}
+  .ing .peso{font-size:26px;font-weight:800;letter-spacing:-.6px;margin-top:3px;}
+  .ing .peso small{font-size:15px;font-weight:700;color:var(--text-2);}
+  .ing.farina{grid-column:1/-1;background:linear-gradient(135deg,#fff7ec,#ffefd6);}
+  @media (prefers-color-scheme: dark){.ing.farina{background:linear-gradient(135deg,#3a2e1c,#2c2417);}}
+  .ing.farina .circle{width:72px;height:72px;font-size:40px;}
+  .ing.farina .peso{font-size:34px;}
+
+  /* Impostazioni */
+  .group{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:6px 16px;margin-bottom:16px;}
+  .grow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:.5px solid var(--sep);}
+  .grow:last-child{border-bottom:none;}
+  .grow .gl{font-weight:600;}
+  .grow .gl .gd{font-size:13px;color:var(--text-2);font-weight:500;}
+  .grow input.num{width:96px;text-align:right;font-size:18px;font-weight:700;padding:9px 12px;border-radius:11px;border:1px solid var(--sep);background:var(--card-2);color:var(--text);}
+  .grow input.num:focus{outline:none;border-color:var(--accent);background:var(--bg-elev);}
+
+  .glabel{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-2);margin:20px 6px 8px;}
+
+  .ing-edit{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:.5px solid var(--sep);}
+  .ing-edit:last-child{border-bottom:none;}
+  .ing-edit .emoji-pick{width:46px;height:46px;flex:0 0 46px;border-radius:12px;background:var(--card-2);font-size:24px;display:flex;align-items:center;justify-content:center;}
+  .ing-edit .nome-in{flex:1;min-width:0;font-size:16px;font-weight:600;padding:10px 12px;border-radius:11px;border:1px solid var(--sep);background:var(--card-2);color:var(--text);}
+  .ing-edit .val-in{width:74px;text-align:right;font-size:16px;font-weight:700;padding:10px 8px;border-radius:11px;border:1px solid var(--sep);background:var(--card-2);color:var(--text);}
+  .ing-edit .unit-sel{width:62px;font-size:15px;font-weight:700;padding:10px 6px;border-radius:11px;border:1px solid var(--sep);background:var(--card-2);color:var(--text);}
+  .ing-edit input:focus,.ing-edit select:focus{outline:none;border-color:var(--accent);background:var(--bg-elev);}
+  .ing-edit .del{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:var(--card-2);color:var(--red);font-size:20px;display:flex;align-items:center;justify-content:center;}
+
+  .emoji-popover{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:24px;}
+  .emoji-popover.show{display:flex;}
+  .emoji-popover .box{background:var(--bg-elev);border-radius:22px;padding:18px;max-width:340px;width:100%;box-shadow:var(--shadow);}
+  .emoji-popover .box h3{margin:2px 4px 14px;font-size:18px;font-weight:800;}
+  .emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+  .emoji-grid button{aspect-ratio:1;border-radius:13px;background:var(--card-2);font-size:26px;display:flex;align-items:center;justify-content:center;}
+  .emoji-grid button:active{transform:scale(.9);}
+
+  /* checkbox conferma ingrediente */
+  .ing{position:relative;transition:transform .08s,box-shadow .15s;}
+  .ing:active{transform:scale(.98);}
+  .ing .check{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;border:2px solid var(--sep);
+    display:flex;align-items:center;justify-content:center;font-size:16px;color:transparent;background:transparent;transition:.15s;}
+  .ing.checked{box-shadow:0 0 0 2.5px var(--green),var(--shadow);}
+  .ing.checked .check{background:var(--green);border-color:var(--green);color:#fff;}
+  /* sacchi farina */
+  .ing .sacchi{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+  .ing .sacchi .sak-main{font-size:17px;font-weight:800;color:var(--text);background:rgba(255,149,0,.16);border-radius:12px;padding:9px 12px;}
+  .ing .sacchi .sak-extra{font-size:16px;font-weight:800;color:#fff;background:var(--accent);border-radius:12px;padding:8px 12px;box-shadow:0 4px 12px rgba(255,149,0,.3);}
+  /* timer */
+  .timer-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 18px;margin:26px 0 10px;text-align:center;}
+  .timer-head{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text-2);}
+  .timer-display{font-size:74px;font-weight:800;letter-spacing:-2px;line-height:1;margin:8px 0 4px;font-variant-numeric:tabular-nums;}
+  .timer-note{font-size:14px;font-weight:600;color:var(--text-2);min-height:20px;margin-bottom:18px;}
+  .timer-actions{display:flex;gap:12px;}
+  .timer-actions .btn{flex:1;}
+  .timer-card.running .timer-display{color:var(--accent);}
+  .timer-card.finished .timer-display{color:var(--red);}
+  .timer-card.finished{animation:flashred 1s infinite;}
+  @keyframes flashred{0%,100%{box-shadow:var(--shadow);}50%{box-shadow:0 0 0 3px var(--red),var(--shadow);}}
+  .btn.danger-btn{background:var(--red);color:#fff;box-shadow:0 8px 22px rgba(255,59,48,.32);}
+
+  .toast{position:fixed;left:50%;bottom:calc(28px + var(--safe-bottom));transform:translateX(-50%) translateY(20px);
+    background:rgba(30,30,32,.94);color:#fff;padding:13px 22px;border-radius:30px;font-weight:700;font-size:15px;
+    opacity:0;pointer-events:none;transition:.3s;z-index:90;backdrop-filter:blur(10px);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== HOME ===== -->
+  <section id="view-home" class="view active">
+    <div class="topbar">
+      <h1>Impasto</h1>
+      <button class="icon-btn" onclick="openSettings()" aria-label="Impostazioni">⚙️</button>
+    </div>
+    <div class="sub">Calcola l'impasto in pochi secondi</div>
+
+    <!-- Card 1: Farina -->
+    <div class="bigcard">
+      <div class="head">
+        <div class="ico">🌾</div>
+        <div class="t">Farina necessaria</div>
+      </div>
+      <div class="farinaedit">
+        <input id="farinaInput" type="number" inputmode="decimal" placeholder="0" oninput="onFarinaInput()" />
+        <span class="unit">kg</span>
+      </div>
+      <div class="hint" id="farinaHint">Inserisci la farina o la produzione</div>
+    </div>
+
+    <!-- Card 2: Produzione -->
+    <div class="bigcard">
+      <div class="head">
+        <div class="ico">🥖</div>
+        <div class="t">Produzione Rosette</div>
+      </div>
+      <div class="seg" id="prodSeg">
+        <button class="on" data-mode="num" onclick="setProdMode('num')">Numero</button>
+        <button data-mode="kg" onclick="setProdMode('kg')">Kg</button>
+      </div>
+      <div class="bigfield">
+        <input id="prodInput" type="number" inputmode="decimal" placeholder="0" oninput="onProdInput()" />
+        <span class="unit" id="prodUnit">pz</span>
+      </div>
+      <div class="hint" id="prodHint"></div>
+    </div>
+
+    <button class="btn" id="calcBtn" onclick="goRicetta()" disabled>Calcola ricetta</button>
+  </section>
+
+  <!-- ===== RICETTA ===== -->
+  <section id="view-ricetta" class="view">
+    <div class="topbar">
+      <div class="lead">
+        <button class="back" onclick="goHome()">‹ Indietro</button>
+      </div>
+      <button class="icon-btn" onclick="openSettings()" aria-label="Impostazioni">⚙️</button>
+    </div>
+
+    <div class="summary">
+      <div class="sumcard accent"><div class="l">Farina</div><div class="v" id="sumFarina">–</div></div>
+      <div class="sumcard"><div class="l">Impasto</div><div class="v" id="sumImpasto">–</div></div>
+      <div class="sumcard"><div class="l">Rosette</div><div class="v" id="sumRosette">–</div></div>
+    </div>
+
+    <div class="lievito-pill">
+      <div class="lab"><span class="e">🫧</span> Lievito oggi</div>
+      <div class="stepper">
+        <button onclick="bumpLievito(-1)">−</button>
+        <input id="lievitoInput" type="number" inputmode="decimal" oninput="onLievitoInput()" />
+        <button onclick="bumpLievito(1)">+</button>
+        <span class="u" id="lievitoUnit">g/kg</span>
+      </div>
+    </div>
+
+    <div id="batches"></div>
+
+    <div class="timer-card" id="timerCard">
+      <div class="timer-head">⏱️ Timer impastatrice</div>
+      <div class="timer-display" id="timerDisplay">25:00</div>
+      <div class="timer-note" id="timerNote">Spunta tutti gli ingredienti per avviare</div>
+      <div class="timer-actions">
+        <button class="btn" id="timerStart" onclick="timerPrimary()" disabled>Avvia 25 min</button>
+        <button class="btn ghost" id="timerReset" onclick="timerReset()" style="display:none">Azzera</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== IMPOSTAZIONI ===== -->
+  <section id="view-settings" class="view">
+    <div class="topbar">
+      <div class="lead"><button class="back" onclick="closeSettings()">‹ Indietro</button></div>
+      <h1 style="font-size:22px">Impostazioni</h1>
+      <span style="width:42px"></span>
+    </div>
+
+    <div class="glabel">Parametri di calcolo</div>
+    <div class="group">
+      <div class="grow">
+        <div class="gl">Calo in cottura<div class="gd">il pane cotto pesa meno dell'impasto</div></div>
+        <div style="display:flex;align-items:center;gap:6px"><input class="num" id="setResa" type="number" inputmode="decimal" /><span style="color:var(--text-2);font-weight:700">%</span></div>
+      </div>
+      <div class="grow">
+        <div class="gl">Rosette per kg<div class="gd">quante rosette in 1 kg di pane</div></div>
+        <input class="num" id="setRosette" type="number" inputmode="decimal" />
+      </div>
+      <div class="grow">
+        <div class="gl">Capacità impastatrice<div class="gd">farina massima per impastata</div></div>
+        <div style="display:flex;align-items:center;gap:6px"><input class="num" id="setCapacita" type="number" inputmode="decimal" /><span style="color:var(--text-2);font-weight:700">kg</span></div>
+      </div>
+      <div class="grow">
+        <div class="gl">Durata timer<div class="gd">tempo di impastamento</div></div>
+        <div style="display:flex;align-items:center;gap:6px"><input class="num" id="setTimer" type="number" inputmode="decimal" /><span style="color:var(--text-2);font-weight:700">min</span></div>
+      </div>
+    </div>
+
+    <div class="glabel">Lievito (modificabile ogni giorno)</div>
+    <div class="group">
+      <div class="grow">
+        <div class="gl">Lievito per kg di farina</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input class="num" id="setLievito" type="number" inputmode="decimal" style="width:74px" />
+          <select id="setLievitoUnit" class="num" style="width:62px;text-align:center;padding:9px 4px"><option value="g">g</option><option value="ml">ml</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="glabel">Ricetta — ingredienti per 1 kg di farina</div>
+    <div class="group" id="ingList"></div>
+    <button class="btn ghost" onclick="addIngrediente()" style="margin-bottom:16px">+ Aggiungi ingrediente</button>
+
+    <button class="btn secondary" onclick="resetDefaults()" style="margin-bottom:10px;color:var(--red)">Ripristina valori predefiniti</button>
+  </section>
+
+</div>
+
+<!-- Emoji picker -->
+<div class="emoji-popover" id="emojiPop" onclick="if(event.target===this)closeEmoji()">
+  <div class="box">
+    <h3>Scegli un'icona</h3>
+    <div class="emoji-grid" id="emojiGrid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========= Stato & persistenza ========= */
+const STORE = 'impasto_settings_v1';
+const DEFAULTS = {
+  resaCottura: 20,        // % calo: pane = impasto * (1 - resa/100)
+  rosettePerKg: 12,
+  capacitaImpastatrice: 150,
+  timerMinuti: 25,
+  lievito: { valore: 10, unita: 'g' },
+  ingredienti: [
+    { nome:'Acqua',        valore:500, unita:'ml', icona:'💧' },
+    { nome:'Sale',         valore:20,  unita:'g',  icona:'🧂' },
+    { nome:'Miglioratore', valore:3,   unita:'g',  icona:'✨' },
+  ]
+};
+let S = load();
+function load(){
+  try{ const r = JSON.parse(localStorage.getItem(STORE)); if(r) return Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), r); }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULTS));
+}
+function save(){ localStorage.setItem(STORE, JSON.stringify(S)); }
+
+/* ========= Calcolo ========= */
+// Fattore impasto: kg di impasto crudo per 1 kg di farina
+function doughFactor(){
+  let f = 1; // la farina stessa
+  for(const ing of S.ingredienti) f += (parseFloat(ing.valore)||0)/1000; // g o ml -> kg (1ml acqua = 1g)
+  f += (parseFloat(S.lievito.valore)||0)/1000;
+  return f;
+}
+const resaMult = ()=> 1 - (parseFloat(S.resaCottura)||0)/100;   // pane = impasto * resaMult
+// Conversioni
+const farinaToPane    = (far)=> far * doughFactor() * resaMult();
+const farinaToImpasto = (far)=> far * doughFactor();
+const paneToFarina    = (pane)=> resaMult()>0 && doughFactor()>0 ? pane / resaMult() / doughFactor() : 0;
+const paneToRosette   = (pane)=> pane * (parseFloat(S.rosettePerKg)||0);
+const rosetteToPane   = (ros)=> (parseFloat(S.rosettePerKg)||0)>0 ? ros / S.rosettePerKg : 0;
+
+/* ========= Formattazione ========= */
+function nf(n, dec){
+  if(!isFinite(n)) n = 0;
+  const r = Number(n.toFixed(dec));
+  return r.toLocaleString('it-IT', { maximumFractionDigits: dec });
+}
+// peso ingrediente nella sua unità (g o ml), con auto kg/L
+function fmtPeso(amount, unit){
+  if(unit==='ml'){ return amount>=1000 ? {v:nf(amount/1000,2), u:'L'} : {v:nf(amount,0), u:'ml'}; }
+  return amount>=1000 ? {v:nf(amount/1000,2), u:'kg'} : {v:nf(amount,0), u:'g'};
+}
+
+/* ========= Stato vivo della home ========= */
+let farinaKg = 0;     // unica fonte di verità
+let prodMode = 'num'; // 'num' | 'kg'
+
+function setProdMode(m){
+  prodMode = m;
+  document.querySelectorAll('#prodSeg button').forEach(b=>b.classList.toggle('on', b.dataset.mode===m));
+  document.getElementById('prodUnit').textContent = m==='num' ? 'pz' : 'kg';
+  // rimostra il valore corrente nella nuova unità
+  const pane = farinaToPane(farinaKg);
+  const inp = document.getElementById('prodInput');
+  if(farinaKg>0){
+    inp.value = m==='num' ? Math.round(paneToRosette(pane)) : nf(pane,2).replace(/\./g,'');
+    inp.value = m==='num' ? Math.round(paneToRosette(pane)) : Number(pane.toFixed(2));
+  }
+  renderHome();
+}
+
+function onProdInput(){
+  const val = parseFloat(document.getElementById('prodInput').value)||0;
+  let pane = prodMode==='num' ? rosetteToPane(val) : val;
+  farinaKg = paneToFarina(pane);
+  // aggiorna campo farina
+  document.getElementById('farinaInput').value = farinaKg>0 ? Number(farinaKg.toFixed(2)) : '';
+  renderHome();
+}
+
+function onFarinaInput(){
+  farinaKg = parseFloat(document.getElementById('farinaInput').value)||0;
+  // aggiorna card produzione
+  const pane = farinaToPane(farinaKg);
+  const inp = document.getElementById('prodInput');
+  if(farinaKg>0) inp.value = prodMode==='num' ? Math.round(paneToRosette(pane)) : Number(pane.toFixed(2));
+  else inp.value='';
+  renderHome();
+}
+
+function renderHome(){
+  const pane = farinaToPane(farinaKg);
+  const ros  = paneToRosette(pane);
+  // hint produzione
+  const ph = document.getElementById('prodHint');
+  if(farinaKg>0){
+    ph.innerHTML = prodMode==='num'
+      ? `≈ <b>${nf(pane,1)} kg</b> di pane`
+      : `≈ <b>${nf(ros,0)}</b> rosette`;
+  } else ph.innerHTML='';
+  // hint farina
+  const fh = document.getElementById('farinaHint');
+  fh.innerHTML = farinaKg>0
+    ? `Bastano per <b>${nf(pane,1)} kg</b> di pane · <b>${nf(ros,0)}</b> rosette`
+    : 'Inserisci la produzione o la farina';
+  // bottone
+  document.getElementById('calcBtn').disabled = !(farinaKg>0);
+}
+
+/* ========= Schermata ricetta ========= */
+function goRicetta(){
+  if(!(farinaKg>0)) return;
+  syncLievitoUI();
+  renderRicetta();
+  timerReset();
+  showView('ricetta');
+}
+// Ordine fisso richiesto: Farina, Sale, Miglioratore, (eventuali custom), Lievito, Acqua
+function prioOf(name){
+  const n = (name||'').toLowerCase();
+  if(n.includes('farina')) return 0;
+  if(n.includes('sale')) return 1;
+  if(n.includes('miglior')) return 2;
+  if(n.includes('lievito')) return 4;
+  if(n.includes('acqua')) return 5;
+  return 3;
+}
+// Sacchi da 25 kg
+function sacchiHtml(kgFar){
+  const sacchi = Math.floor(kgFar/25 + 1e-9);
+  const resto = Math.round((kgFar - sacchi*25)*10)/10;
+  if(sacchi <= 0) return `<span class="sak-main">📦 ${nf(kgFar,1)} kg sfusi</span>`;
+  let h = `<span class="sak-main">📦 ${sacchi} ${sacchi===1?'sacco':'sacchi'} da 25 kg</span>`;
+  if(resto > 0.05) h += `<span class="sak-extra">+ ${nf(resto,1)} kg da aggiungere</span>`;
+  return h;
+}
+
+function renderRicetta(){
+  const pane = farinaToPane(farinaKg), ros = paneToRosette(pane), impasto = farinaToImpasto(farinaKg);
+  document.getElementById('sumFarina').innerHTML  = `${nf(farinaKg,1)}<small> kg</small>`;
+  document.getElementById('sumImpasto').innerHTML = `${nf(impasto,1)}<small> kg</small>`;
+  document.getElementById('sumRosette').innerHTML = `${nf(ros,0)}<small> pz</small>`;
+
+  // suddivisione in impastate
+  const cap = parseFloat(S.capacitaImpastatrice)||farinaKg;
+  let rest = farinaKg, batches = [];
+  while(rest > 0.0001){ const q = Math.min(cap, rest); batches.push(q); rest -= q; }
+
+  const wrap = document.getElementById('batches');
+  wrap.innerHTML = '';
+  const multi = batches.length>1;
+
+  batches.forEach((bFar, i)=>{
+    if(multi){
+      const tt = document.createElement('div');
+      tt.className='batch-title';
+      tt.innerHTML = `<span class="badge">Impastata ${i+1}</span> ${nf(bFar,1)} kg di farina`;
+      wrap.appendChild(tt);
+    }
+    // costruisco gli item e li ordino in modo fisso
+    const items = [];
+    items.push({ icon:'🌾', nome:'Farina', peso: fmtPeso(bFar*1000,'g'), prio:0, isFarina:true, sub: sacchiHtml(bFar) });
+    for(const ing of S.ingredienti){
+      const amount = (parseFloat(ing.valore)||0) * bFar;
+      items.push({ icon: ing.icona||'•', nome: ing.nome, peso: fmtPeso(amount, ing.unita), prio: prioOf(ing.nome) });
+    }
+    const lievAmt = (parseFloat(S.lievito.valore)||0) * bFar;
+    items.push({ icon:'🫧', nome:'Lievito', peso: fmtPeso(lievAmt, S.lievito.unita), prio:4 });
+    items.sort((a,b)=> a.prio - b.prio);
+
+    const grid = document.createElement('div');
+    grid.className='ing-grid';
+    items.forEach(it=> grid.appendChild(ingCard(it.icon, it.nome, it.peso, it)));
+    wrap.appendChild(grid);
+  });
+  updateTimerUI();
+}
+function ingCard(icon, nome, peso, opts){
+  opts = opts||{};
+  const d = document.createElement('div');
+  d.className = 'ing' + (opts.isFarina?' farina':'');
+  d.innerHTML = `<div class="check">✓</div>
+    <div class="circle">${icon}</div>
+    <div class="nome">${escapeHtml(nome)}</div>
+    <div class="peso">${peso.v}<small> ${peso.u}</small></div>
+    ${opts.sub ? `<div class="sacchi">${opts.sub}</div>` : ''}`;
+  d.addEventListener('click', ()=>{ d.classList.toggle('checked'); updateTimerUI(); });
+  return d;
+}
+
+/* ========= Timer impastatrice ========= */
+function timerTotalSecs(){ return Math.round((parseFloat(S.timerMinuti)||25)*60); }
+function timerMinuti(){ return parseFloat(S.timerMinuti)||25; }
+let timerRemaining = timerTotalSecs();
+let timerEndAt = null, timerInt = null, timerRunning = false, timerFinished = false;
+let audioCtx = null, alarmInt = null;
+
+function fmtClock(s){ const m=Math.floor(s/60), ss=s%60; return m+':'+String(ss).padStart(2,'0'); }
+function allIngredientsChecked(){
+  const all = document.querySelectorAll('#batches .ing');
+  return all.length>0 && document.querySelectorAll('#batches .ing.checked').length === all.length;
+}
+function updateTimerUI(){
+  const disp = document.getElementById('timerDisplay');
+  const startBtn = document.getElementById('timerStart');
+  const resetBtn = document.getElementById('timerReset');
+  const note = document.getElementById('timerNote');
+  const card = document.getElementById('timerCard');
+  if(!disp) return;
+  disp.textContent = fmtClock(timerRemaining);
+  card.classList.toggle('finished', timerFinished);
+  card.classList.toggle('running', timerRunning);
+  if(timerFinished){
+    startBtn.textContent = 'Ferma allarme'; startBtn.disabled = false; startBtn.className = 'btn danger-btn';
+    resetBtn.style.display = 'none';
+    note.textContent = '⏰ Tempo scaduto!';
+    return;
+  }
+  if(timerRunning){
+    startBtn.textContent = 'Pausa'; startBtn.disabled = false; startBtn.className = 'btn secondary';
+    resetBtn.style.display = '';
+    note.textContent = 'Impastatrice in funzione…';
+    return;
+  }
+  const checked = allIngredientsChecked();
+  const started = timerRemaining < timerTotalSecs();
+  startBtn.textContent = started ? 'Riprendi' : ('Avvia ' + nf(timerMinuti(),0) + ' min');
+  startBtn.disabled = !checked;
+  startBtn.className = 'btn';
+  resetBtn.style.display = started ? '' : 'none';
+  note.textContent = checked
+    ? (started ? 'In pausa' : "Pronto: avvia quando parte l'impastatrice")
+    : 'Spunta tutti gli ingredienti per avviare';
+}
+function timerPrimary(){
+  if(timerFinished){ stopAlarm(); timerFinished=false; timerRemaining=timerTotalSecs(); updateTimerUI(); return; }
+  if(timerRunning){ timerPause(); } else { timerStart(); }
+}
+function timerStart(){
+  if(!allIngredientsChecked()) return;
+  ensureAudio();
+  timerEndAt = Date.now() + timerRemaining*1000;
+  timerRunning = true; timerFinished = false;
+  timerInt = setInterval(timerTick, 200);
+  updateTimerUI();
+}
+function timerTick(){
+  const rem = Math.max(0, Math.round((timerEndAt - Date.now())/1000));
+  timerRemaining = rem;
+  const disp = document.getElementById('timerDisplay');
+  if(disp) disp.textContent = fmtClock(rem);
+  if(rem <= 0){
+    clearInterval(timerInt); timerInt = null;
+    timerRunning = false; timerFinished = true;
+    startAlarm(); updateTimerUI();
+  }
+}
+function timerPause(){ timerRunning=false; if(timerInt){ clearInterval(timerInt); timerInt=null; } updateTimerUI(); }
+function timerReset(){ stopAlarm(); if(timerInt){ clearInterval(timerInt); timerInt=null; } timerRunning=false; timerFinished=false; timerRemaining=timerTotalSecs(); updateTimerUI(); }
+
+function ensureAudio(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+  }catch(e){}
+}
+function beep(){
+  if(!audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type='sine'; o.frequency.value=880; o.connect(g); g.connect(audioCtx.destination);
+  const t = audioCtx.currentTime;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.5, t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+0.35);
+  o.start(t); o.stop(t+0.37);
+}
+function startAlarm(){
+  ensureAudio();
+  const ring = ()=>{ beep(); if(navigator.vibrate) navigator.vibrate(250); };
+  ring();
+  alarmInt = setInterval(ring, 650);
+}
+function stopAlarm(){ if(alarmInt){ clearInterval(alarmInt); alarmInt=null; } if(navigator.vibrate) navigator.vibrate(0); }
+
+/* ========= Lievito quick edit ========= */
+function syncLievitoUI(){
+  document.getElementById('lievitoInput').value = S.lievito.valore;
+  document.getElementById('lievitoUnit').textContent = S.lievito.unita + '/kg';
+}
+function onLievitoInput(){
+  S.lievito.valore = Math.max(0, parseFloat(document.getElementById('lievitoInput').value)||0);
+  save(); renderRicetta();
+}
+function bumpLievito(d){
+  S.lievito.valore = Math.max(0, (parseFloat(S.lievito.valore)||0) + d);
+  save(); syncLievitoUI(); renderRicetta();
+}
+
+/* ========= Impostazioni ========= */
+function openSettings(){ fillSettings(); showView('settings'); }
+function closeSettings(){ readSettings(); save(); renderHome(); if(document.getElementById('view-ricetta').classList.contains('hidden')){} showView('home'); }
+
+function fillSettings(){
+  document.getElementById('setResa').value = S.resaCottura;
+  document.getElementById('setRosette').value = S.rosettePerKg;
+  document.getElementById('setCapacita').value = S.capacitaImpastatrice;
+  document.getElementById('setTimer').value = S.timerMinuti;
+  document.getElementById('setLievito').value = S.lievito.valore;
+  document.getElementById('setLievitoUnit').value = S.lievito.unita;
+  renderIngList();
+}
+function renderIngList(){
+  const box = document.getElementById('ingList');
+  box.innerHTML='';
+  S.ingredienti.forEach((ing,idx)=>{
+    const row = document.createElement('div');
+    row.className='ing-edit';
+    row.innerHTML = `
+      <button class="emoji-pick" onclick="pickEmoji(${idx})">${ing.icona||'•'}</button>
+      <input class="nome-in" value="${escapeAttr(ing.nome)}" oninput="updIng(${idx},'nome',this.value)" placeholder="Nome" />
+      <input class="val-in" type="number" inputmode="decimal" value="${ing.valore}" oninput="updIng(${idx},'valore',this.value)" />
+      <select class="unit-sel" onchange="updIng(${idx},'unita',this.value)">
+        <option value="g" ${ing.unita==='g'?'selected':''}>g</option>
+        <option value="ml" ${ing.unita==='ml'?'selected':''}>ml</option>
+      </select>
+      <button class="del" onclick="delIng(${idx})">✕</button>`;
+    box.appendChild(row);
+  });
+}
+function updIng(i,key,val){ S.ingredienti[i][key] = key==='valore' ? (parseFloat(val)||0) : val; save(); }
+function delIng(i){ S.ingredienti.splice(i,1); save(); renderIngList(); }
+function addIngrediente(){ S.ingredienti.push({nome:'Nuovo', valore:0, unita:'g', icona:'🥄'}); save(); renderIngList(); }
+
+function readSettings(){
+  S.resaCottura = clampNum(document.getElementById('setResa').value, 0, 95, 20);
+  S.rosettePerKg = Math.max(0.01, parseFloat(document.getElementById('setRosette').value)||12);
+  S.capacitaImpastatrice = Math.max(1, parseFloat(document.getElementById('setCapacita').value)||150);
+  S.timerMinuti = clampNum(document.getElementById('setTimer').value, 1, 240, 25);
+  S.lievito.valore = Math.max(0, parseFloat(document.getElementById('setLievito').value)||0);
+  S.lievito.unita = document.getElementById('setLievitoUnit').value;
+}
+function clampNum(v,min,max,def){ let n = parseFloat(v); if(!isFinite(n)) n=def; return Math.min(max, Math.max(min,n)); }
+
+function resetDefaults(){
+  if(!confirm('Ripristinare tutti i valori predefiniti della ricetta?')) return;
+  S = JSON.parse(JSON.stringify(DEFAULTS)); save(); fillSettings(); toast('Valori ripristinati');
+}
+
+/* ========= Emoji picker ========= */
+const EMOJIS = ['💧','🧂','✨','🫧','🌾','🥔','🧈','🥛','🍶','🧫','🍯','🥚','🫒','🧴','🌰','🍚','🥄','🧪','🟡','⚪️','🔵','🟤'];
+let emojiTarget = null;
+function pickEmoji(idx){
+  emojiTarget = idx;
+  const g = document.getElementById('emojiGrid'); g.innerHTML='';
+  EMOJIS.forEach(e=>{ const b=document.createElement('button'); b.textContent=e; b.onclick=()=>{ S.ingredienti[emojiTarget].icona=e; save(); renderIngList(); closeEmoji(); }; g.appendChild(b); });
+  document.getElementById('emojiPop').classList.add('show');
+}
+function closeEmoji(){ document.getElementById('emojiPop').classList.remove('show'); }
+
+/* ========= Navigazione ========= */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goHome(){ showView('home'); }
+
+/* ========= Util ========= */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+let toastT;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* ========= Avvio ========= */
+renderHome();
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
