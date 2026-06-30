@@ -661,24 +661,24 @@ function updateFsUI(){
 function layoutFs(){
   const ov = document.getElementById('fsOverlay');
   if(!ov || !ov.classList.contains('show')) return;
-  const portrait = window.innerHeight > window.innerWidth;
-  const W = portrait ? window.innerHeight : window.innerWidth;   // lato lungo (larghezza in orizzontale)
-  const H = portrait ? window.innerWidth : window.innerHeight;   // lato corto (altezza in orizzontale)
+  // verticale: riempie lo schermo nell'orientamento naturale, senza rotazione
+  const W = window.innerWidth, H = window.innerHeight;
+  const base = Math.min(W, H);
   const stage = ov.querySelector('.fs-stage');
   stage.style.width = W+'px';
   stage.style.height = H+'px';
-  stage.style.transform = `translate(-50%,-50%) rotate(${portrait?90:0}deg)`;
-  const ring = Math.min(H*0.60, W*0.42);
+  stage.style.transform = 'translate(-50%,-50%)';
+  const ring = Math.min(W*0.80, H*0.52);
   const svg = ov.querySelector('.fs-ring');
   svg.style.width = ring+'px'; svg.style.height = ring+'px';
   document.getElementById('fsTime').style.fontSize = (ring*0.30)+'px';
   const note = ov.querySelector('.fs-note');
-  note.style.fontSize = (H*0.05)+'px';
-  note.style.margin = (H*0.045)+'px 0 '+(H*0.038)+'px';
+  note.style.fontSize = (base*0.052)+'px';
+  note.style.margin = (base*0.06)+'px 0 '+(base*0.05)+'px';
   ov.querySelectorAll('.fs-actions button').forEach(b=>{
-    b.style.fontSize = (H*0.05)+'px';
-    b.style.padding = (H*0.028)+'px '+(H*0.08)+'px';
-    b.style.margin = '0 '+(H*0.022)+'px';
+    b.style.fontSize = (base*0.052)+'px';
+    b.style.padding = (base*0.032)+'px '+(base*0.085)+'px';
+    b.style.margin = '0 '+(base*0.022)+'px';
   });
 }
 function openTimerFullscreen(i){
@@ -688,10 +688,10 @@ function openTimerFullscreen(i){
   document.body.style.overflow = 'hidden';
   // layout subito (non dipende dalle API fullscreen)
   layoutFs(); updateFsUI();
-  // miglioramenti opzionali: fullscreen reale + blocco orizzontale + schermo sempre acceso
+  // miglioramenti opzionali: fullscreen reale + blocco verticale + schermo sempre acceso
   (async ()=>{
     try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){}
-    try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
+    try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('portrait'); }catch(e){}
     try{ if('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
     layoutFs();
   })();
