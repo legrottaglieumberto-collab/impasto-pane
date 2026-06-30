@@ -1,4 +1,4 @@
-const CACHE = 'impasto-v3';
+const CACHE = 'impasto-v4';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.svg', './icon-maskable.svg'];
 
 self.addEventListener('install', e => {
